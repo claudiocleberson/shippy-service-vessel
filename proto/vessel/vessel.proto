@@ -19,8 +19,10 @@ message Specification {
 message Response {
     Vessel vessel = 1;
     repeated Vessel vessels = 2;
+    bool created = 3;
 }
 
 service VesselService{
     rpc FindAvailable(Specification) returns (Response){}
+    rpc Create(Vessel) returns (Response){}
 }

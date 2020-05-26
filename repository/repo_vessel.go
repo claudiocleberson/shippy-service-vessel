@@ -1,35 +1,37 @@
 package repository
 
 import (
-	"errors"
+	"context"
 
-	pb "github.com/claudiocleberson/shippy-service-vessel/proto/vessel"
+	"github.com/claudiocleberson/shippy-service-vessel/datastore"
+	"github.com/claudiocleberson/shippy-service-vessel/models"
 )
 
 type VesselRepository interface {
-	FindAvailable(*pb.Specification) (*pb.Vessel, error)
+	FindAvailable(context.Context, *models.Specification) (*models.Vessel, error)
+	Create(context.Context, *models.Vessel) error
 }
 
 type vesselRepository struct {
-	vessels []*pb.Vessel
+	mongoClient datastore.MongoClient
 }
 
-func NewVesselRepository(vessels []*pb.Vessel) VesselRepository {
+func NewVesselRepository(cli datastore.MongoClient) VesselRepository {
 	return &vesselRepository{
-		vessels: vessels,
+		mongoClient: cli,
 	}
 }
 
-func init() {
+func (repo *vesselRepository) FindAvailable(ctx context.Context, spec *models.Specification) (*models.Vessel, error) {
 
+	vessel, err := repo.mongoClient.FindAvailable(ctx, spec)
+	if err != nil {
+		return nil, err
+	}
+	return vessel, nil
 }
 
-func (repo *vesselRepository) FindAvailable(spec *pb.Specification) (*pb.Vessel, error) {
-
-	for _, vessel := range repo.vessels {
-		if spec.Capacity <= vessel.Capacity && spec.MaxWeight <= vessel.MaxWeight {
-			return vessel, nil
-		}
-	}
-	return nil, errors.New("No vessel found by that spec")
+func (repo *vesselRepository) Create(ctx context.Context, vessel *models.Vessel) error {
+	err := repo.mongoClient.Create(ctx, vessel)
+	return err
 }
